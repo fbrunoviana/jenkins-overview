@@ -1,0 +1,31 @@
+- name: Instalando o Jenkins
+  hosts: jenkins
+  become: true
+  tasks:
+  - name: Instalando o OpenJRE
+    apt:
+      name: openjdk-17-jre
+      state: present
+      update_cache: true
+
+  - name: Adicionar chave GPG do Jenkins
+  #   apt_key:
+  #     url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+  #     state: present
+    shell: curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+  
+  - name: Adicionar chave GPG do Jenkins
+    shell: echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/ | sudo tee /etc/apt/sources.list.d/jenkins.list > /dev/null
+
+  - name: Instalar Jenkins
+    apt:
+      name: jenkins
+      update_cache: yes
+
+  - name: Exibir a senha do Jenkins
+    shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+    register: admin_password_output
+
+  - name: Exibir a saída
+    debug:
+      var: admin_password_output.stdout
