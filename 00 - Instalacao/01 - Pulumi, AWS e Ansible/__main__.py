@@ -1,33 +1,32 @@
 """An AWS Python Pulumi program"""
 import pulumi
-import configparser 
-from pulumi_aws import ec2 
+from pulumi_aws import ec2, s3 
 
-sg = ec2.SecurityGroup("securiyt-group-svc", description="Secure group for Jenkins")
+# Create an AWS resource (S3 Bucket)
+bucket = s3.Bucket('my-bucket')
 
-allow_ssh = ec2.SecurityGroupRule("allow_ssh",
-                            security_group_id=sg.id,
-                            type="ingress",
-                            from_port=22,
-                            to_port=22,
-                            protocol="tcp", 
-                            cidr_blocks=["0.0.0.0/0"])
+# Export the name of the bucket
+pulumi.export('bucket_name', bucket.id)
 
-allow_http = ec2.SecurityGroupRule("allow_http",
-                            security_group_id=sg.id,
-                            type="ingress",
-                            from_port=8080,
-                            to_port=8080,
-                            protocol="tcp",
-                            cidr_blocks=["0.0.0.0/0"])
+sg = ec2.SecurityGroup('web-svc-gro', description="Security group for web service")
 
-allow_external = ec2.SecurityGroupRule("allow_external",
-                            security_group_id=sg.id,
-                            type="egress",
-                            from_port=0,
-                            to_port=0,
-                            protocol="-1",
-                            cidr_blocks=["0.0.0.0/0"])
+allow_ssh = ec2.SecurityGroupRule("AllowSSH", type="ingress", 
+                                  from_port=22, to_port=22, 
+                                  protocol="tcp", 
+                                  cidr_blocks=["0.0.0.0/0"], 
+                                  security_group_id=sg.id)
+
+allow_http = ec2.SecurityGroupRule("AllowHTTP", type="ingress",
+                                   from_port=8080, to_port=8080,
+                                   protocol="tcp",
+                                   cidr_blocks=["0.0.0.0/0"], 
+                                   security_group_id=sg.id)
+
+allow_all = ec2.SecurityGroupRule("AllowALL", type="egress",
+                                  from_port=0, to_port=0,
+                                  protocol="-1",
+                                  cidr_blocks=["0.0.0.0/0"],
+                                  security_group_id=sg.id)
 
 
 ec2_instance = ec2.Instance("jenkins", 
